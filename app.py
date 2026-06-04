@@ -1,6 +1,3 @@
-import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
@@ -14,9 +11,9 @@ st.title("🌍 Transformer-Based Text Translation")
 st.write("Translate English text into multiple languages using Transformers.")
 
 MODELS = {
-    "Hindi":   "Helsinki-NLP/opus-mt-en-hi",
-    "French":  "Helsinki-NLP/opus-mt-en-fr",
-    "German":  "Helsinki-NLP/opus-mt-en-de",
+    "Hindi": "Helsinki-NLP/opus-mt-en-hi",
+    "French": "Helsinki-NLP/opus-mt-en-fr",
+    "German": "Helsinki-NLP/opus-mt-en-de",
     "Spanish": "Helsinki-NLP/opus-mt-en-es",
     "Italian": "Helsinki-NLP/opus-mt-en-it"
 }
@@ -24,14 +21,14 @@ MODELS = {
 @st.cache_resource
 def load_model(model_name):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(
-        model_name,
-        low_cpu_mem_usage=False,  # prevents multiprocessing/forkserver path
-    )
-    model.eval()
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     return tokenizer, model
 
-target_language = st.selectbox("Select Target Language", list(MODELS.keys()))
+target_language = st.selectbox(
+    "Select Target Language",
+    list(MODELS.keys())
+)
+
 model_name = MODELS[target_language]
 
 with st.spinner("Loading model..."):
@@ -44,10 +41,13 @@ input_text = st.text_area(
 )
 
 if st.button("Translate"):
+
     if not input_text.strip():
         st.warning("Please enter some text.")
+
     else:
         with st.spinner("Translating..."):
+
             inputs = tokenizer(
                 input_text,
                 return_tensors="pt",
@@ -55,17 +55,21 @@ if st.button("Translate"):
                 truncation=True,
                 max_length=512
             )
+
             translated_tokens = model.generate(
                 **inputs,
                 max_length=512,
                 num_beams=4,
                 early_stopping=True
             )
+
             translated_text = tokenizer.decode(
                 translated_tokens[0],
                 skip_special_tokens=True
             )
+
         st.success("Translation Completed!")
+
         st.subheader("Translated Text")
         st.write(translated_text)
 
